@@ -1,13 +1,13 @@
 import React from "react";
 
-const bg = () => {
+const Bg = () => {
   return (
-    <div className="">
-      <p className="position-absolute top-50 z-index-1 start-50 translate-middle text-info fw-semibold fs-1">
+    <div className="mi">
+      <p className="position-absolute opacity-25 top-50 z-index-1 start-50 translate-middle text-warning fw-semibold fs-1">
         Electro.
       </p>
     </div>
   );
 };
 
-export default bg;
+export default Bg;
