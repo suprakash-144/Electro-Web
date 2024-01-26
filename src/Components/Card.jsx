@@ -30,7 +30,7 @@ const Card = ({ refernce, data, index, setdata }) => {
       dragElastic={0.1}
       className={`${
         complete ? "text-decoration-line-through opacity-75 " : ""
-      } text-dark p-3 w-25 h-25   rounded-3 bg-white`}
+      } text-dark p-3 cardset`}
     >
       <p className="fs-6 ">{data.title}</p>
       <p className="overflow-auto">{data.description}</p>

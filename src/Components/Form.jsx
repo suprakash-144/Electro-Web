@@ -8,19 +8,20 @@ import { redirect } from "next/navigation";
 const schema = yup
   .object({
     email: yup.string().email().required(),
-    password: yup.string().required(),
+    password: yup.string().required().min(6),
   })
   .required();
 
 const Form = () => {
-  useEffect(() => {}, []);
   const [login, setlogin] = useState(true);
+  const { signupUser, signinUser, State } = useContext(FirebaseContext);
+
   useEffect(() => {
     if (State()) {
       redirect("/home");
     }
   }, []);
-  const { signupUser, signinUser, State } = useContext(FirebaseContext);
+
   const {
     register,
     handleSubmit,
@@ -33,10 +34,10 @@ const Form = () => {
     <div>
       {login ? (
         <div className="d-flex justify-content-center align-items-center flex-column ">
-          <div className=" d-flex justify-content-center text-white">
+          <div className=" d-flex justify-content-center text-dark">
             <form
               onSubmit={handleSubmit(signinUser)}
-              className="form d-flex flex-column "
+              className=" d-flex flex-column "
             >
               <input
                 {...register("email")}
@@ -70,7 +71,7 @@ const Form = () => {
         <div className=" d-flex justify-content-center text-white">
           <form
             onSubmit={handleSubmit(signupUser)}
-            className="form d-flex flex-column w-25"
+            className="form d-flex flex-column "
           >
             <input
               {...register("email")}
@@ -85,7 +86,6 @@ const Form = () => {
               placeholder="Password"
             />
             <p>{errors.password?.message}</p>
-            {/* <input type="submit" className="btn btn-outline-warning  w-25" /> */}
 
             <input type="submit" className="btn btn-outline-warning  w-25" />
           </form>

@@ -1,23 +1,33 @@
 "use client";
-import { createContext, useContext } from "react";
+import { createContext } from "react";
 import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  setDoc,
+  collection,
+} from "firebase/firestore";
 
 import { initializeApp } from "firebase/app";
+import { redirect } from "next/dist/server/api-utils";
+import { toast } from "react-toastify";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_apiKey,
-  authDomain: process.env.NEXT_PUBLIC_authDomain,
-  projectId: process.env.NEXT_PUBLIC_projectId,
-  storageBucket: process.env.NEXT_PUBLIC_storageBucket,
-  messagingSenderId: process.env.NEXT_PUBLIC_messagingSenderId,
-  appId: process.env.NEXT_PUBLIC_appId,
-  measurementId: process.env.NEXT_PUBLIC_measurementId,
+  apiKey: process.env.apiKey,
+  authDomain: process.env.authDomain,
+  projectId: process.env.projectId,
+  storageBucket: process.env.storageBucket,
+  messagingSenderId: process.env.messagingSenderId,
+  appId: process.env.appId,
+  measurementId: process.env.measurementId,
 };
 
 export const app = initializeApp(firebaseConfig);
@@ -28,31 +38,29 @@ export const FirebaseContext = createContext(null);
 
 export const FirebaseProvider = ({ children }) => {
   const signupUser = ({ email, password }) => {
-    console.log("signup");
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
-        console.log("2");
         const user = userCredential.user;
-        console.log("Registration successful:", user);
-        alert("Registration Successful");
+        toast.success("Registration Successful");
+        // alert("Registration Successful");
+
+        redirect(user, 200, "/home");
       })
       .catch((err) => {
-        console.log("signup");
+        toast.error("Singup Failed!");
         alert("Error:", err.message);
-        console.log("Registration not successful:", err);
       });
   };
 
   const signinUser = ({ email, password }) => {
-    console.log("Signin");
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
-        console.log("Login successful:", user);
-        alert("Login Successful");
+        toast.success("Login Successful");
       })
       .catch((err) => {
-        alert("Login Failed!");
+        // alert("Login Failed!");
+        toast.error("Login Failed!");
         console.log("Login not successful:", err);
       });
   };
@@ -73,6 +81,33 @@ export const FirebaseProvider = ({ children }) => {
       return false;
     });
   };
+  const craeteTodo = async (data) => {
+    console.log(data);
+    await setDoc(doc(firestore, "todos", auth.currentUser.uid), data);
+  };
+  const fetchAlltodos = async () => {
+    // const docRef = doc(firestore, "todos", auth.currentUser.uid);
+    // // const docRef = doc(firestore, "todos",where(uid,"==", auth.currentUser.uid ));
+    // const docSnap = await getDoc(docRef);
+    // if (docSnap.exists()) {
+    //   return docSnap.data();
+    // } else {
+    //   console.log("No such document!");
+    // }
+    let todos = [];
+    const querySnapshot = await getDocs(collection(firestore, "todos"));
+    querySnapshot.forEach((doc) => {
+      if (doc.id == auth.currentUser.uid) {
+        todos.push(doc.data());
+      }
+      // console.log(doc.id, " => ", doc.data());
+    });
+    console.log(todos);
+    return todos;
+  };
+  const deleteTodo = async (id) => {
+    await deleteDoc(doc(firestore, "todos", id));
+  };
 
   // const isLoggedin = auth;
 
@@ -83,6 +118,9 @@ export const FirebaseProvider = ({ children }) => {
         signinUser,
         signout,
         State,
+        craeteTodo,
+        fetchAlltodos,
+        deleteDoc,
         // isLoggedin,
       }}
     >

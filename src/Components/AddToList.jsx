@@ -1,9 +1,10 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import Card from "./Card";
+import { FirebaseContext } from "@/config/Firebase";
 
 const schema = yup
   .object({
@@ -16,11 +17,12 @@ const schema = yup
 const AddToList = () => {
   const ref = useRef(null);
   const [data, setdata] = useState([]);
+
+  const { fetchAlltodos, craeteTodo, signout } = useContext(FirebaseContext);
+
   useEffect(() => {
-    const items = JSON.parse(localStorage.getItem("todos"));
-    if (items) {
-      setdata(items);
-    }
+    // const item = fetchAlltodos();
+    // setdata(item);
   }, []);
 
   const {
@@ -32,12 +34,22 @@ const AddToList = () => {
   });
 
   const addtolist = (values) => {
-    setdata([...data, values]);
-    localStorage.setItem("todos", JSON.stringify(data));
+    craeteTodo(values);
   };
 
   return (
     <div className="z-index-3 min-vh-25">
+      <div className="d-flex justify-content-between px-3   py-2 shadow-sm">
+        <h3 className="text-warning ">Electro.</h3>
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            signout();
+          }}
+        >
+          Logout
+        </button>
+      </div>
       <div className=" d-flex justify-content-center text-white">
         <form
           onSubmit={handleSubmit(addtolist)}
