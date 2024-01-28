@@ -21,3 +21,7 @@ body {
   background: #eeeeee;
   box-shadow: 5px -5px 10px #d4cece, -5px 5px 10px #f8f2f2;
 }
+.a::placeholder {
+  color: rgb(184, 178, 178);
+  opacity: 1; /* Firefox */
+}

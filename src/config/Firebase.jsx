@@ -1,5 +1,5 @@
 "use client";
-import { createContext } from "react";
+import { createContext, useState } from "react";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -9,15 +9,13 @@ import {
 import {
   deleteDoc,
   doc,
-  getDoc,
-  getDocs,
   getFirestore,
-  setDoc,
   collection,
+  addDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 import { initializeApp } from "firebase/app";
-import { redirect } from "next/dist/server/api-utils";
 import { toast } from "react-toastify";
 
 const firebaseConfig = {
@@ -32,19 +30,22 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const firestore = getFirestore(app);
+export const firestore = getFirestore(app);
 
 export const FirebaseContext = createContext(null);
 
 export const FirebaseProvider = ({ children }) => {
+  const [logedin, setislogedin] = useState(false);
+  const [user, setuser] = useState(null);
+
+  const [data, setdata] = useState([]);
   const signupUser = ({ email, password }) => {
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
         toast.success("Registration Successful");
         // alert("Registration Successful");
-
-        redirect(user, 200, "/home");
+        authchange();
       })
       .catch((err) => {
         toast.error("Singup Failed!");
@@ -57,9 +58,11 @@ export const FirebaseProvider = ({ children }) => {
       .then((userCredential) => {
         const user = userCredential.user;
         toast.success("Login Successful");
+        setTimeout(() => {
+          authchange();
+        }, 1000);
       })
       .catch((err) => {
-        // alert("Login Failed!");
         toast.error("Login Failed!");
         console.log("Login not successful:", err);
       });
@@ -68,48 +71,56 @@ export const FirebaseProvider = ({ children }) => {
     signOut(auth)
       .then((res) => {
         alert("Logout Successful");
+        authchange();
       })
       .catch((err) => {
         alert(err.message);
       });
   };
-  const State = () => {
+  const authchange = () => {
     auth.onAuthStateChanged((user) => {
-      if (user) {
-        return true;
-      }
-      return false;
+      setislogedin(user && user.uid ? true : false);
+      setuser(user);
     });
+    return { logedin, user };
   };
-  const craeteTodo = async (data) => {
-    console.log(data);
-    await setDoc(doc(firestore, "todos", auth.currentUser.uid), data);
+  const craeteTodo = async ({ userId, title, description, status }) => {
+    try {
+      await addDoc(collection(firestore, "todos"), {
+        user: userId,
+        title: title,
+        description: description,
+        status: status,
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error("Not Added");
+    }
   };
-  const fetchAlltodos = async () => {
-    // const docRef = doc(firestore, "todos", auth.currentUser.uid);
-    // // const docRef = doc(firestore, "todos",where(uid,"==", auth.currentUser.uid ));
-    // const docSnap = await getDoc(docRef);
-    // if (docSnap.exists()) {
-    //   return docSnap.data();
-    // } else {
-    //   console.log("No such document!");
-    // }
-    let todos = [];
-    const querySnapshot = await getDocs(collection(firestore, "todos"));
-    querySnapshot.forEach((doc) => {
-      if (doc.id == auth.currentUser.uid) {
-        todos.push(doc.data());
-      }
-      // console.log(doc.id, " => ", doc.data());
-    });
-    console.log(todos);
-    return todos;
+  const toggleStatus = async ({ docId, status }) => {
+    try {
+      const todoref = doc(firestore, "todos", docId);
+      await updateDoc(
+        todoref,
+        {
+          status: status,
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.log(error);
+      toast.error("Changed");
+    }
   };
-  const deleteTodo = async (id) => {
-    await deleteDoc(doc(firestore, "todos", id));
+  const deleteTodo = async (docId) => {
+    try {
+      const todoref = doc(firestore, "todos", docId);
+      await deleteDoc(todoref);
+    } catch (error) {
+      console.log(error);
+      toast.error("Changed");
+    }
   };
-
-  // const isLoggedin = auth;
 
   return (
     <FirebaseContext.Provider
@@ -117,11 +128,10 @@ export const FirebaseProvider = ({ children }) => {
         signupUser,
         signinUser,
         signout,
-        State,
+        authchange,
         craeteTodo,
-        fetchAlltodos,
-        deleteDoc,
-        // isLoggedin,
+        toggleStatus,
+        deleteTodo,
       }}
     >
       {children}
